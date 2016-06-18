@@ -1,3 +1,5 @@
+#! /usr/bin/env ruby
+
 class Key
   attr_reader :state
   attr_reader :name
@@ -49,15 +51,25 @@ class DoorBell
   end
 end
 
+class Pedal
+  def initialize(*)
+  end
+
+  def push
+    'Accelerate!'
+  end
+end
+
 class Keyboard
   attr_reader :keys
 
   def initialize
     @keys =  {
-      q: Key.new(:q, 18, 18),
-      w: Key.new(:w, 19, 19),
+      q: Key.new(:q, 18, 17),
+      w: Key.new(:w, 21, 20),
       ctrl: Key.new(:ctrl, 130, 80),
-      bell: DoorBell.new(:dzzz, 69, 90)
+      bell: DoorBell.new(:dzzz, 69, 90),
+      throtlle: Pedal.new(:gas, 100, 100)
     }.freeze
   end
 
@@ -65,7 +77,11 @@ class Keyboard
     key_name = key_name.to_sym.downcase if key_name.respond_to?(:to_sym)
 
     if @keys.has_key?(key_name)
-      return @keys[key_name].press(time)
+      if @keys[key_name].respond_to?(:press)
+        return @keys[key_name].press(time)
+      else
+        'Beep! It\'s not a button!'
+      end
     end
   end
 end
@@ -73,3 +89,4 @@ end
 keyboard = Keyboard.new
 puts keyboard.press(:bell, 10)
 puts keyboard.press(:q, 10)
+puts keyboard.press(:throtlle, 1)
