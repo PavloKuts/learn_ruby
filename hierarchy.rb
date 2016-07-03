@@ -11,19 +11,22 @@ class Hierarchy
     end
 
     padding = 0
-    begin
-      puts "#{'-' * padding}~> #{orig_class.to_s}"
+    puts '•'
+      begin
+   unless orig_class == BasicObject
+    puts'┣' "#{'━' * padding}  #{orig_class.to_s}"
+   else
+    puts'┗' "#{'━' * padding}  #{orig_class.to_s}"
+    end
       padding += 2
-    end while orig_class = orig_class.superclass
-    puts
+      end  while orig_class = orig_class.superclass
+   puts
   end
-
   private
 
   def constantize(camel_cased_word)
     names = camel_cased_word.split('::')
     names.shift if names.empty? || names.first.empty?
-
     constant = Object
     names.each do |name|
       constant = constant.const_defined?(name) ? constant.const_get(name) : constant.const_missing(name)
@@ -34,8 +37,8 @@ end
 
 if $0 == __FILE__
   Hierarchy.new(3).generate
-  Hierarchy.new(Hierarchy.new(3)).generate
-  Hierarchy.new(String).generate
-  Hierarchy.new('test').generate
-  Hierarchy.new(nil).generate
+  #Hierarchy.new(Hierarchy.new(3)).generate
+  #Hierarchy.new(String).generate
+  #Hierarchy.new('test').generate
+  #Hierarchy.new(nil).generate
 end
