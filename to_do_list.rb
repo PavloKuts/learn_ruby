@@ -37,25 +37,26 @@ class ToDoList
   end
 end
 
-to_do_list = ToDoList.new
-to_do_list.add('Hello')
-to_do_list.add('Buy a bottle of milk')
-to_do_list.add('Write a programm', 70)
-to_do_list.print
+if $0 === __FILE__
+  to_do_list = ToDoList.new
+  to_do_list.add('Hello')
+  to_do_list.add('Buy a bottle of milk')
+  to_do_list.add('Write a programm', 70)
+  to_do_list.print
 
-puts
-puts "=="*20
-puts
+  puts
+  puts "=="*20
+  puts
 
 
-to_do_list.delete!(1)
-to_do_list.set_priority(2, 100)
-to_do_list.print
+  to_do_list.delete!(1)
+  to_do_list.set_priority(2, 100)
+  to_do_list.print
 
-puts
-puts "=="*20
-puts
+  puts
+  puts "=="*20
+  puts
 
-to_do_list.set_priority(2, 200)
-to_do_list.print
-
+  to_do_list.set_priority(2, 200)
+  to_do_list.print
+end
