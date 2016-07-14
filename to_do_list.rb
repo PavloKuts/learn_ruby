@@ -8,6 +8,7 @@ class ToDoList
 
     task[:text] = text
     task[:priority] = priority if priority
+    task[:done] = false
 
     @tasks << task
 
@@ -16,7 +17,8 @@ class ToDoList
 
   def print
     @tasks.each_with_index do |task, index|
-      puts "#{index + 1}: #{task[:text]}"
+      done =  task[:done] ? '✔' : ''
+      puts "#{index + 1}: #{task[:text]} #{done}"
     end
   end
 
@@ -27,6 +29,10 @@ class ToDoList
   def set_priority(task_number, priority)
     @tasks[task_number - 1][:priority] = priority
     resort!
+  end
+
+  def done(task_number)
+    @tasks[task_number - 1][:done] = true
   end
 
   private
@@ -58,5 +64,6 @@ if $0 === __FILE__
   puts
 
   to_do_list.set_priority(2, 200)
+  to_do_list.done(2)
   to_do_list.print
 end

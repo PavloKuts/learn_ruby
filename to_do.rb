@@ -29,6 +29,8 @@ class ToDoApp
         print_list
       when 'priority', 's'
         priority
+      when 'done'
+        done
       else
         error(command)
       end
@@ -77,6 +79,16 @@ class ToDoApp
    new_priority = gets.to_i
 
    @to_do_list.set_priority(task_number, new_priority)
+  end
+
+  def done
+   print_list
+   puts
+
+   print 'Enter task number: '
+   task_number = gets.to_i
+
+   @to_do_list.done(task_number)
   end
 
   def help
