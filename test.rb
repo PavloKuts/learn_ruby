@@ -1,6 +1,7 @@
 require_relative './hierarchy'
 require 'English'
 
+# Without English $ARGV would be $*
 if $ARGV[0] === '-v'
   puts 'My version is: 0.0.1'
 else

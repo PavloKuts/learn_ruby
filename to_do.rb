@@ -18,7 +18,7 @@ class ToDoApp
 
       case command
       when 'exit', 'e', 'q'
-        ToDoApp.quit
+        exit
       when 'help', '', 'h'
         help
       when 'add', 'a'
@@ -61,11 +61,14 @@ class ToDoApp
   end
 
   def print_list
+    title = ' To Do List '
+    padding = 20
+
     puts
     puts
-    puts "#{'='*20} To Do List #{'='*20}"
+    puts "#{'=' * padding}#{title}#{'=' * padding}"
     @to_do_list.print
-    puts "="*52
+    puts "=" * (title.length + (padding * 2))
   end
 
   def priority
@@ -109,15 +112,14 @@ class ToDoApp
     puts "Command not found: #{command}"
   end
 
-  def self.quit
-    puts
-    puts 'Bye-bye! Thank you for using this app!'
-    exit
-  end
-
   trap(:INT) do
-    ToDoApp.quit
+    exit
   end
 end
 
-ToDoApp.new
+begin
+  ToDoApp.new
+rescue SystemExit
+  puts
+  puts 'Bye-bye! Thank you for using this app!'
+end
