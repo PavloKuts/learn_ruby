@@ -31,6 +31,8 @@ class ToDoApp
         priority
       when 'done'
         done
+      when 'uniq', 'u'
+        uniq
       else
         error(command)
       end
@@ -94,6 +96,10 @@ class ToDoApp
    @to_do_list.done(task_number)
   end
 
+  def uniq
+    @to_do_list.uniq!
+  end
+
   def help
     print <<-EOT
 
@@ -104,6 +110,7 @@ class ToDoApp
      * priority (s) - set new priority
      * print (p) - print the list
      * exit (q, e) - quit the programm
+     * uniq (u) - delete duplicates
      * help (h) - show this help
     EOT
   end
