@@ -35,6 +35,12 @@ class ToDoList
     @tasks[task_number - 1][:done] = true
   end
 
+  def uniq!
+    @tasks.sort_by! {|task| task[:text]}
+    @tasks.uniq! {|task| task[:text].downcase}
+    resort!
+  end
+
   private
 
   def resort!
@@ -46,8 +52,10 @@ end
 if $0 === __FILE__
   to_do_list = ToDoList.new
   to_do_list.add('Hello')
+  to_do_list.add('hello')
   to_do_list.add('Buy a bottle of milk')
   to_do_list.add('Write a programm', 70)
+  to_do_list.uniq!
   to_do_list.print
 
   puts
