@@ -1,0 +1,11 @@
+gem 'british'
+
+group :dev do
+  gem 'letters'
+  gem 'byebug'
+end
+
+group :test do
+  gem 'testrocket'
+end
+

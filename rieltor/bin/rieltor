@@ -1,0 +1,7 @@
+#! /usr/bin/env ruby
+
+require_relative '../lib/newspaper'
+require_relative '../lib/blacklist'
+
+class App
+end

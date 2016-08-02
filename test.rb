@@ -14,4 +14,3 @@ else
   puts $?.to_i
   puts $CHILD_STATUS.to_i
 end
-
