@@ -41,8 +41,7 @@ class Newspaper
   end
 
   def contains_word?(line)
-    line_words = line.scan(/(?:\b)(\W+?)(?:\b)/)
-      .select {|w| w[0].length > 3}
+    line_words = line.scan(/(?:\b)(\p{L}{3,}?)(?:\b)/)
       .map {|w| w[0]}
       .to_set
 
@@ -58,7 +57,8 @@ if $0 == __FILE__
     +->{
       newspaper_path = './test/fixtures/newspaper.txt'
       good_words = ['ремонт', 'хороший']
-      Newspaper.new(newspaper_path, good_words).numbers_list[1][:number][0] == '+38(067)710-59-07'
+      numbers_list = Newspaper.new(newspaper_path, good_words).numbers_list
+      numbers_list[1][:number][0] == '+38(067)710-59-07'
     }
 
   rescue Errno::ENOENT => e
