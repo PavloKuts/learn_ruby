@@ -5,7 +5,7 @@ require 'letters'
 class Newspaper
   include British::Initialisable
 
-  PHONE_PATTERN = /(\+?(?:\d\d)?\s?\(?\d{3}\)?\s?\d{3}(?:\-|\s)?\d{2}(?:\-|\s)?\d{2})/
+  PHONE_PATTERN = /(\+?(?:\d\d)?\s?\(?\d{3}\)?(?:\-|\s)?\d{3}(?:\-|\s)?\d{2}(?:\-|\s)?\d{2})/
   WORDS_PATTERN = /(?:\b)(\p{L}{3,}?)(?:\b)/
 
   def initialise(newspaper_path, words_list = [])
@@ -39,7 +39,8 @@ class Newspaper
   private
 
   def parse_phone(line)
-    line.scan(PHONE_PATTERN)[0]
+    number = line.scan(PHONE_PATTERN)[0]
+    number[0].strip if number
   end
 
   def contains_words?(line)
@@ -73,7 +74,7 @@ if $0 === __FILE__
         good_numbers << n[:number] unless n[:words]
       end
 
-      good_numbers[0][0] === '+38(067)710-59-07'
+      good_numbers === ['067-707-47-89', '+38(067)710-59-07']
     }
 
     +->{
@@ -85,7 +86,7 @@ if $0 === __FILE__
         good_numbers << n[:number] if n[:words] && n[:number]
       end
 
-      good_numbers[0][0] === '+380937659867'
+      good_numbers === ['067-707-47-89', '+380937659867']
     }
 
 
