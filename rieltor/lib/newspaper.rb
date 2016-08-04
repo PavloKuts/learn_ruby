@@ -6,7 +6,7 @@ require 'letters'
 class Newspaper
   include British::Initialisable
 
-  PHONE_PATTERN = /(\+?(?:\d\d)?\s?\(?\d{3}\)?\s?\d{3}(?:\-|\s)?\d{2}(?:\-|\s)?\d{2})/
+  PHONE_PATTERN = /(\+?(?:\d\d)?\s?\(?\d{3}\)?(?:\-|\s)?\d{3}(?:\-|\s)?\d{2}(?:\-|\s)?\d{2})/
 
   def initialise(newspaper_path, words_list = [])
     @newspaper = File.read(newspaper_path)
@@ -37,11 +37,12 @@ class Newspaper
   private
 
   def parse_phone(line)
-    line.scan(PHONE_PATTERN)[0]
+    number = line.scan(PHONE_PATTERN)[0]
+    number[0].strip if number
   end
 
   def contains_word?(line)
-    line_words = line.scan(/(?:\b)(\p{L}{3,}?)(?:\b)/)
+    line_words = line.scan(/(?:\b)(\p{L}{3,})(?:\b)/)
       .map {|w| w[0]}
       .to_set
 
@@ -52,13 +53,12 @@ end
 
 if $0 == __FILE__
   begin
-
     !->{'Newspaper must return phones list'}
     +->{
       newspaper_path = './test/fixtures/newspaper.txt'
       good_words = ['ремонт', 'хороший']
       numbers_list = Newspaper.new(newspaper_path, good_words).numbers_list
-      numbers_list[1][:number][0] == '+38(067)710-59-07'
+      numbers_list[1][:number] == '+38(067)710-59-07'
     }
 
   rescue Errno::ENOENT => e
