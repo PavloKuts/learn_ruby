@@ -1,5 +1,6 @@
 source 'https://rubygems.org'
 gem 'british'
+gem 'activesupport'
 
 group :dev do
   gem 'letters'
