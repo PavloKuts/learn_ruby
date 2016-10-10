@@ -1,0 +1,10 @@
+{
+  "films": [
+    {"title": "The Wizard of Oz" , "year": 1939, "rating": 5},
+    {"title": "The Godfather", "year": 1972, "rating": 4.5},
+    {"title": "Toy Story 2", "year": 1999, "rating": 3},
+    {"title": "Mary Poppins", "year": 1964, "rating": 5},
+    {"title": "Mad Max: Fury Road", "year": 2015, "rating": null},
+    {"title": "8 1/2", "year": 1963, "rating": 3.5}
+  ]
+}
