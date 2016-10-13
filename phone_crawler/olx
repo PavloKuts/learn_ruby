@@ -1,0 +1,33 @@
+#! /usr/bin/env ruby
+
+require 'net/http'
+require 'json'
+require 'nokogiri'
+require 'clipboard'
+
+PHONE_ID_PATTERN = %r{(?<=\'id\'\:\')(.*?)(?=\')}i
+
+olx_url = URI(Clipboard.paste.split('#')[0])
+response = Net::HTTP.get(olx_url)
+
+phone_id = Nokogiri::HTML(response).css('.link-phone')
+                                   .attribute('class')
+                                   .value
+                                   .match(PHONE_ID_PATTERN)[1]
+
+phone_link = "https://www.olx.ua/ajax/misc/contact/phone/#{phone_id}/"
+
+response = Net::HTTP.get(URI(phone_link))
+data = JSON.parse(response, {symbolize_names: true})[:value]
+
+phones = []
+
+if data.include?('span')
+  Nokogiri::HTML(data).css('.block').each {|phone| phones << phone.text}
+else
+  phones << data
+end
+
+phones.each do |phone|
+  puts " ☎  #{phone}"
+end
