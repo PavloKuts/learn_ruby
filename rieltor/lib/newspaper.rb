@@ -1,15 +1,12 @@
 require 'set'
-require 'british'
 require 'testrocket'
 require 'active_support/core_ext/string/multibyte'
 
 class Newspaper
-  include British::Initialisable
-
   PHONE_PATTERN = /(\+?(?:\d\d)?\s?\(?\d{3}\)?(?:\-|\s)?\d{3}(?:\-|\s)?\d{2}(?:\-|\s)?\d{2})/
   WORDS_PATTERN = /(?:\b)(\p{L}{3,}?)(?:\b)/i
 
-  def initialise(newspaper_path, words_list = [])
+  def initialize(newspaper_path, words_list = [])
     raise TypeError, "no implicit convertion of #{words_list.class} (#{words_list.inspect}) into Set" unless words_list.respond_to?(:to_set)
 
     @words_list = words_list.to_set

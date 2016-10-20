@@ -7,11 +7,9 @@ require_relative '../lib/blacklist'
 require_relative '../lib/config'
 
 class App
-  include British::Initialisable
-
   CONFIG_PATH = "#{Dir.home}/rieltor.conf"
 
-  def initialise
+  def initialize
     @config = Config.new(CONFIG_PATH).config
 
     @black_list_path = $ARGV[0]

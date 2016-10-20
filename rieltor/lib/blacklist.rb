@@ -1,14 +1,10 @@
-require 'british'
-
 class BlackList
-  include British::Initialisable
-
-  def initialise(black_list_path)
+  def initialize(black_list_path)
     @black_list_path = black_list_path
     @black_list = File.read(@black_list_path)
       .lines
-      .reject {|number| number.strip.empty?}
       .map {|number| number.strip}
+      .reject(&:empty?)
       .map {|number| clear_number(number) }
       .uniq
   end
@@ -22,7 +18,7 @@ class BlackList
     number = clear_number(number)
 
     File.open(@black_list_path, 'a') do |file|
-      unless include?(number)
+      if !@black_list.include?(number)
         @black_list << number
         file.puts number
       end
