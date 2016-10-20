@@ -8,9 +8,9 @@ autoload :CSV, 'csv'
 
 class Stars
 
-  FULL_STAR = '★'
-  HALF_STAR = '✭'
-  EMPTY_STAR = '☆'
+  FULL_STAR = '★ '
+  HALF_STAR = '✭ '
+  EMPTY_STAR = '☆ '
 
   def generate(rating)
     rating = 0 unless rating
@@ -43,9 +43,7 @@ class DataProvider
   end
 
   def load
-    file = File.open(@file_path, 'r')
-    text = file.read
-    file.close
+    text = File.read(@file_path)
 
     @parser.parse(text, @parser_options)
   end
