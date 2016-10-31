@@ -1,33 +1,54 @@
 #! /usr/bin/env ruby
 
-require 'net/http'
-require 'json'
-require 'nokogiri'
+require 'letters'
 require 'clipboard'
 
-PHONE_ID_PATTERN = %r{(?<=\'id\'\:\')(.*?)(?=\')}i
+require_relative './lib/phone_crawler'
 
-olx_url = URI(Clipboard.paste.split('#')[0])
-response = Net::HTTP.get(olx_url)
-
-phone_id = Nokogiri::HTML(response).css('.link-phone')
-                                   .attribute('class')
-                                   .value
-                                   .match(PHONE_ID_PATTERN)[1]
-
-phone_link = "https://www.olx.ua/ajax/misc/contact/phone/#{phone_id}/"
-
-response = Net::HTTP.get(URI(phone_link))
-data = JSON.parse(response, {symbolize_names: true})[:value]
-
-phones = []
-
-if data.include?('span')
-  Nokogiri::HTML(data).css('.block').each {|phone| phones << phone.text}
-else
-  phones << data
+class OlxAppError < Exception
 end
 
-phones.each do |phone|
-  puts " ☎  #{phone}"
+class OlxApp
+  attr_reader :url
+
+  def run
+    phones = PhoneCrawler.get_phones(get_url)
+
+    unless phones.empty?
+      phones.each do |phone|
+        puts " ☎  #{phone}"
+      end
+      exit
+    end
+
+    fail OlxAppError, 'No phones where found!'
+  end
+
+  def error(message)
+    puts "ERROR: #{message}"
+    exit
+  end
+
+  private
+
+  def get_url
+    url = Clipboard.paste.strip
+    @url = url
+
+    fail OlxAppError, 'URL is empty!' if !url || url.empty?
+
+    url
+  end
+end
+
+app = OlxApp.new
+
+begin
+  app.run
+rescue OlxAppError => e
+  app.error(e.message)
+rescue Errno::ECONNREFUSED, URI::InvalidURIError => e
+  app.error("Wrong URL was passed! `#{app.url.split(/\R/).join(' ')}`")
+rescue SocketError
+  app.error('Network error occurred!')
 end

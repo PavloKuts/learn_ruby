@@ -50,3 +50,63 @@ def test(p)
 end
 
 test(p)
+
+
+# Yield scope demo
+class Test
+  attr_reader :name
+
+  def initialize
+    @name = 'Jake'
+  end
+
+  def test
+    yield(self)
+  end
+end
+
+t = Test.new
+t.test do |n|
+  puts n.name
+end
+
+
+# Block as file.close automation
+class MyCoolFile
+  def open(path, mode)
+    f = File.open(path, mode)
+    yield(f)
+    f.close
+  end
+end
+
+MyCoolFile.new.open('sdfsdf', 'a+') do |f|
+  f.puts('sdfsdfds')
+  f.puts('abc')
+  f.puts('123')
+end
+
+class SuperClass
+  def config
+    @config = {}
+    yield(self)
+  end
+
+  def set(param, value)
+    @config[param] = value
+  end
+
+  def execute
+    puts @config.inspect
+  end
+end
+
+c = SuperClass.new
+
+c.config do |settings|
+  settings.set :test, true
+  settings.set :ip, '192.168.0.1'
+  settings.set :port, 80
+end
+
+c.execute
