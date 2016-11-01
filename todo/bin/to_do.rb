@@ -1,22 +1,39 @@
 #! /usr/bin/env ruby
 
 require 'English'
-require 'letters'
 require 'colorize'
+require 'letters'
+require 'fileutils'
 require_relative '../lib/to_do_list'
 
 class ToDoApp
 
-  BYE_TEXT = 'Bye-bye! Thank you for using this app!'
+  BYE_TEXT = "All your edits were saved!\nBye-bye! Thank you for using this app!"
 
   STRIP_LAMBDA = -> (str) { str.strip }
   INTEGER_LAMBDA = -> (str) { str.to_i }
 
+  NUMBER_PATTERN = /^[0-9]+$/
+
+  COMMANDS = {
+    add: {alias: :a, doc: 'add a new task'},
+    delete: {alias: :d, doc: 'delete task'},
+    list: {alias: :l, doc: 'print the list'},
+    priority: {alias: :s, doc: 'set new priority'},
+    done: {alias: :m, doc: 'mark task as done'},
+    clear: {alias: :c, doc: 'clear completed tasks'},
+    reopen: {alias: :r, doc: 'mark task as undone'},
+    uniq: {alias: :u, doc: 'delete duplicates'},
+    quit: {alias: :q, doc: 'quit the app'},
+    help: {alias: :h, doc: 'show this help'}
+  }
+
   VALIDATORS = {
     task_text: -> (task) { task && !task.empty? },
-    task_priority: -> (priority) { priority && /^[0-9]+$/.match(priority.to_s) && priority >= 0 && priority <= 100 },
-    task_number: -> (number) { number && /^[0-9]+$/.match(number.to_s) && number >= 1 },
-    task_count: -> (number, task_count) { number <= task_count }
+    task_priority: -> (priority) { priority && NUMBER_PATTERN.match(priority.to_s) && priority >= 0 && priority <= 100 },
+    task_number: -> (number) { number && NUMBER_PATTERN.match(number.to_s) && number >= 1 },
+    task_count: -> (number, task_count) { number <= task_count },
+    file_path: -> (file_path) {}
   }
 
   VALIDATION_ERRORS = {
@@ -27,66 +44,91 @@ class ToDoApp
   }
 
   def initialize
-    ToDoList.new.transaction do |to_do|
-      @to_do_list = to_do
+    @args = $ARGV.dup
 
-      @interactive = $ARGV.include?('-i')
+    @exit = false
+    @interactive = @args.include?('-i')
+
+    @aliases = []
+
+    COMMANDS.each_pair do |k, v|
+      @aliases << v[:alias]
+      create_method(v[:alias]) { self.send(k) }
+    end
+
+    file_path = args(@args, STRIP_LAMBDA)
+
+    if @interactive && file_path == '-i'
+      file_path = ask({
+        question: 'Enter to-do file path',
+        callback: STRIP_LAMBDA
+      })
+    end
+
+    if !COMMANDS.keys.include?(file_path.to_sym) && !@aliases.include?(file_path.to_sym)
+      FileUtils.touch(file_path)
+      to_do_list = ToDoList.new(file_path)
+    else
+      @args.unshift(nil)
+      to_do_list = ToDoList.new
+    end
+
+    to_do_list.transaction do |to_do|
+      @to_do_list = to_do
       run
     end
   end
 
   private
 
+  def create_method(name, &block)
+     self.class.send(:define_method, name, &block)
+  end
+
   def run
     begin
+      if @exit
+        break
+      end
+
       if @interactive
         command = ask({
           question: 'Enter command',
           callback: STRIP_LAMBDA
-        })[0]
+        })
       else
-        command = args(STRIP_LAMBDA)[0]
+        command = args(@args, nil, STRIP_LAMBDA)
       end
 
-      case command
-      when 'exit', 'e', 'q'
-        puts
-        puts
-        puts 'All your edits were saved!'
-        puts BYE_TEXT
-        break
-      when 'help', '', 'h'
-        help
-      when 'add', 'a'
-        add
-      when 'delete', 'd'
-        delete
-      when 'print', 'p'
-        print_list
-      when 'priority', 's'
-        priority
-      when 'done'
-        done
-      when 'clear'
-        clear
-      when 'reopen'
-        done(false)
-      when 'uniq', 'u'
-        uniq
+      command = :help unless command
+
+      command = command.to_sym
+
+      if COMMANDS.keys.include?(command) || @aliases.include?(command)
+        send(command)
       else
         command_not_found(command)
       end
-
-      puts
     end while @interactive
   end
 
-  def args(*callbacks)
+  def quit
+    puts
+    puts
+    puts BYE_TEXT
+    @exit = true
+  end
+
+  def reopen
+    done(false)
+  end
+
+  def args(args, *callbacks)
     return unless callbacks.respond_to?(:to_a)
     callbacks = callbacks.to_a
     results = []
 
-    $ARGV.each_with_index do |arg, i|
+    args.each_with_index do |arg, i|
       if callbacks[i] && callbacks[i].respond_to?(:call)
         results << callbacks[i].call(arg)
       else
@@ -94,7 +136,13 @@ class ToDoApp
       end
     end
 
-    return *(results.compact)
+    results.compact!
+
+    if results.count > 1
+      return *(results.compact)
+    else
+      return results[0]
+    end
   end
 
   def ask(*questions)
@@ -115,7 +163,11 @@ class ToDoApp
       end
     end
 
-    return *results
+    if results.count > 1
+      return *results
+    else
+      return results[0]
+    end
   end
 
   def valid?(type, *data)
@@ -134,6 +186,8 @@ class ToDoApp
       })
     else
       task, priority = args(
+        @args,
+        nil,
         nil,
         STRIP_LAMBDA,
         INTEGER_LAMBDA
@@ -148,18 +202,20 @@ class ToDoApp
 
   def delete
     if @interactive
-      print_list
+      list
       puts
 
       task_number = ask({
         question: 'Enter task number',
         callback: INTEGER_LAMBDA
-      })[0]
+      })
     else
       task_number = args(
+        @args,
+        nil,
         nil,
         INTEGER_LAMBDA
-      )[0]
+      )
     end
 
     error(VALIDATION_ERRORS[:task_number_error]) unless valid?(:task_number, task_number)
@@ -168,7 +224,7 @@ class ToDoApp
     @to_do_list.delete!(task_number)
   end
 
-  def print_list
+  def list
     title = ' To Do List '
     padding = 20
 
@@ -183,11 +239,13 @@ class ToDoApp
     end
 
     puts ("=" * (title.length + (padding * 2))).yellow
+    puts
+    puts
   end
 
   def priority
     if @interactive
-      print_list
+      list
       puts
 
       task_number, new_priority = ask({
@@ -200,6 +258,8 @@ class ToDoApp
       })
     else
       task_number, new_priority = args(
+        @args,
+        nil,
         nil,
         INTEGER_LAMBDA,
         INTEGER_LAMBDA
@@ -215,22 +275,25 @@ class ToDoApp
 
   def done(status = true)
     if @interactive
-      print_list
+      list
       puts
 
       task_number = ask({
         question: 'Enter task number',
         callback: INTEGER_LAMBDA
-      })[0]
+      })
     else
       task_number = args(
+        @args,
+        nil,
         nil,
         INTEGER_LAMBDA
-      )[0]
+      )
     end
 
     error(VALIDATION_ERRORS[:task_number_error]) unless valid?(:task_number, task_number)
     error(VALIDATION_ERRORS[:task_count_error]) unless valid?(:task_count, task_number, @to_do_list.tasks.count)
+
     @to_do_list.done(task_number, status)
   end
 
@@ -243,22 +306,18 @@ class ToDoApp
   end
 
   def help
-    print <<-EOT
+    puts
+    puts 'Commands available (-i for interactive mode):'
+    puts
 
-     Commands available (-i for interactive mode):
+    COMMANDS.each_pair do |command, info|
+      comm_line = "* #{command} (#{info[:alias]})"
+      info_line = " #{info[:doc]}"
+      puts comm_line + " #{'.' * (50 - (info_line.length + comm_line.length)) }" + info_line
+    end
 
-     * add (a) - add a new task
-     * done - mark task as done
-     * clear - clear completed tasks
-     * reopen - mark task as undone
-     * delete (d) - delete task
-     * priority (s) - set new priority
-     * print (p) - print the list
-     * exit (q, e) - quit the programm
-     * uniq (u) - delete duplicates
-     * help (h) - show this help
-     * ^C - to cancel all the operations
-    EOT
+    puts '* ^C - to cancel all the operations'
+    puts
   end
 
   def error(message)
@@ -266,7 +325,7 @@ class ToDoApp
     puts message.red
 
     if !@interactive
-      @to_do_list.save
+      @to_do_list.save if @to_do_list
       exit!
     end
   end

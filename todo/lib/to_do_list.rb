@@ -1,5 +1,4 @@
 require 'json'
-require 'fileutils'
 
 class ToDoList
 
@@ -7,13 +6,12 @@ class ToDoList
 
   attr_reader :tasks
 
-  def initialize
+  def initialize(filename = FILENAME)
     @tasks = []
-    @file_path = FILENAME
-    load
+    load(filename)
   end
 
-  def transaction(&block)
+  def transaction
     yield(self)
     save
   end
@@ -54,6 +52,10 @@ class ToDoList
     end
   end
 
+  def uniq!
+    @tasks.uniq! {|task| task[:text].downcase}
+  end
+
   private
 
   def create(text, priority, done)
@@ -66,15 +68,8 @@ class ToDoList
     task
   end
 
-  def uniq!
-    @tasks.sort_by! {|task| task[:text]}
-    @tasks.uniq! {|task| task[:text].downcase}
-    resort!
-  end
-
-  def load
-    FileUtils.touch(@file_path) unless File.exists?(@file_path)
-    @file = File.open(@file_path, 'a+')
+  def load(filename)
+    @file = File.open(filename, 'a+')
 
     while task = @file.gets
       task = JSON.parse(task, {symbolize_names: true})

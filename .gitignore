@@ -10,6 +10,8 @@
 /test/version_tmp/
 /tmp/
 tags
+.tags
+.tags1
 
 # Used by dotenv library to load environment variables.
 # .env
@@ -52,3 +54,6 @@ build-iPhoneSimulator/
 
 # Byebug
 **/.byebug_history
+
+# Mac OS
+.DS_Store
