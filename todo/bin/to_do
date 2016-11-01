@@ -47,6 +47,8 @@ class ToDoApp
     @args = $ARGV.dup
 
     @exit = false
+    @cancel = false
+
     @interactive = @args.include?('-i')
 
     @aliases = []
@@ -89,6 +91,8 @@ class ToDoApp
       if @exit
         break
       end
+
+      @cancel = false
 
       if @interactive
         command = ask({
@@ -197,7 +201,7 @@ class ToDoApp
     error(VALIDATION_ERRORS[:task_text_error]) unless valid?(:task_text, task)
     error(VALIDATION_ERRORS[:task_priority_error]) if priority && !valid?(:task_priority, priority)
 
-    @to_do_list.add(task, priority)
+    @to_do_list.add(task, priority) unless @cancel
   end
 
   def delete
@@ -221,7 +225,7 @@ class ToDoApp
     error(VALIDATION_ERRORS[:task_number_error]) unless valid?(:task_number, task_number)
     error(VALIDATION_ERRORS[:task_count_error]) unless valid?(:task_count, task_number, @to_do_list.tasks.count)
 
-    @to_do_list.delete!(task_number)
+    @to_do_list.delete!(task_number) unless @cancel
   end
 
   def list
@@ -270,7 +274,7 @@ class ToDoApp
     error(VALIDATION_ERRORS[:task_count_error]) unless valid?(:task_count, task_number, @to_do_list.tasks.count)
     error(VALIDATION_ERRORS[:task_priority_error]) if new_priority && !valid?(:task_priority, new_priority)
 
-    @to_do_list.set_priority(task_number, new_priority)
+    @to_do_list.set_priority(task_number, new_priority) unless @cancel
   end
 
   def done(status = true)
@@ -294,7 +298,7 @@ class ToDoApp
     error(VALIDATION_ERRORS[:task_number_error]) unless valid?(:task_number, task_number)
     error(VALIDATION_ERRORS[:task_count_error]) unless valid?(:task_count, task_number, @to_do_list.tasks.count)
 
-    @to_do_list.done(task_number, status)
+    @to_do_list.done(task_number, status) unless @cancel
   end
 
   def clear
@@ -323,10 +327,13 @@ class ToDoApp
   def error(message)
     puts
     puts message.red
+    puts
 
     if !@interactive
       @to_do_list.save if @to_do_list
       exit!
+    else
+      @cancel = true
     end
   end
 
