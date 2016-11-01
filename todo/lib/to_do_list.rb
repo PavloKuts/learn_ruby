@@ -1,12 +1,9 @@
 require 'json'
 
 class ToDoList
-
-  FILENAME = "#{Dir.home}/todo.list"
-
   attr_reader :tasks
 
-  def initialize(filename = FILENAME)
+  def initialize(filename)
     @tasks = []
     load(filename)
   end
@@ -86,8 +83,6 @@ end
 
 if $0 === __FILE__
   require 'letters'
-
-  File.delete(ToDoList::FILENAME) if File.exists?(ToDoList::FILENAME)
 
   todo = ToDoList.new
 

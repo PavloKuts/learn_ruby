@@ -8,7 +8,7 @@ require_relative '../lib/to_do_list'
 
 class ToDoApp
 
-  BYE_TEXT = "All your edits were saved!\nBye-bye! Thank you for using this app!"
+  BYE_TEXT = "Bye-bye! Thank you for using this app!"
 
   STRIP_LAMBDA = -> (str) { str.strip }
   INTEGER_LAMBDA = -> (str) { str.to_i }
@@ -65,13 +65,12 @@ class ToDoApp
       })
     end
 
-    if !COMMANDS.keys.include?(file_path.to_sym) && !@aliases.include?(file_path.to_sym)
-      FileUtils.touch(file_path)
-      to_do_list = ToDoList.new(file_path)
-    else
+    if COMMANDS.keys.include?(file_path.to_sym) || @aliases.include?(file_path.to_sym)
+      file_path = "#{Dir.home}/todo.list"
       @args.unshift(nil)
-      to_do_list = ToDoList.new
     end
+
+    to_do_list = ToDoList.new(file_path)
 
     to_do_list.transaction do |to_do|
       @to_do_list = to_do
@@ -115,6 +114,7 @@ class ToDoApp
   def quit
     puts
     puts
+    puts 'All your edits were saved!'.yellow
     puts BYE_TEXT
     @exit = true
   end
