@@ -58,18 +58,18 @@ Options:
       error("--from must be <= --to and both must be > 0 and < #{last_page_number} for this URL")
     end
 
-
-    progress_bar ||= ProgressBar.create(
-      title: "Ads",
-      starting_at: 0,
-      total: 100,
-      progress_mark: '▓',
-      length: 80,
-      format: '%t crawling: [%B] %p%% :: %a'
-    )
+    progress_bar = nil
 
     ads = @ad_crawler.ads(url, start_page, finish_page) do |count|
-      progress_bar.total = count
+      progress_bar ||= ProgressBar.create(
+        title: "Ads",
+        starting_at: 0,
+        total: count,
+        progress_mark: '▓',
+        length: 80,
+        format: '%t crawling: [%B] %p%% :: %a'
+      )
+
       progress_bar.increment
     end
 

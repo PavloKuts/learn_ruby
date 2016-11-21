@@ -33,7 +33,7 @@ class AdCrawler
 
     ads_count = ads_links.count
 
-    ads_links.each_with do |ad_link|
+    ads_links.each do |ad_link|
       yield(ads_count) if block_given?
 
       ad = ad(ad_link)
