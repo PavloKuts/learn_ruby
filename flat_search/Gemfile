@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+# A sample Gemfile
+source "https://rubygems.org"
+
+gem 'nokogiri'
+gem 'sqlite3'
+gem 'rest-client'
+gem 'docopt'
+gem 'ruby-progressbar'
+
+group :test do
+  gem 'testrocket'
+  gem 'timecop'
+end
+
+group :dev do
+  gem 'letters'
+  gem 'byebug'
+end
