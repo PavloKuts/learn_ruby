@@ -67,6 +67,8 @@ class ToDoApp
       })
     end
 
+    file_path = :h unless file_path
+
     if COMMANDS.keys.include?(file_path.to_sym) || @aliases.include?(file_path.to_sym)
       file_path = "#{Dir.home}/todo.list"
       @args.unshift(nil)
