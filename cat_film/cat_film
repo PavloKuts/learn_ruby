@@ -1,0 +1,123 @@
+#! /usr/bin/env ruby
+require 'English'
+require 'pathname'
+
+autoload :Psych, 'yaml'
+autoload :JSON, 'json'
+autoload :CSV, 'csv'
+
+class Stars
+
+  FULL_STAR = '★ '
+  HALF_STAR = '✭ '
+  EMPTY_STAR = '☆ '
+
+  def generate(rating)
+    rating = 0 unless rating
+
+    if is_float?(rating)
+      half_star = 1
+      full_star = rating - 0.5
+    else
+      half_star = 0
+      full_star = rating
+    end
+
+    empty_star = 5 - full_star - half_star
+
+    "#{FULL_STAR * full_star}#{HALF_STAR * half_star}#{EMPTY_STAR * empty_star}"
+  end
+
+  private
+
+  def is_float?(rating)
+    !((rating - rating.floor) == 0)
+  end
+end
+
+class DataProvider
+  def initialize(file, parser, parser_options = {})
+    @file_path = file
+    @parser = parser
+    @parser_options = parser_options
+  end
+
+  def load
+    text = File.read(@file_path)
+
+    @parser.parse(text, @parser_options)
+  end
+end
+
+class DataYAML
+  def self.parse(text, parser_options)
+    Psych.load(text)
+  end
+
+end
+class DataJSON
+  def self.parse(text, parser_options)
+    JSON.parse(text, parser_options)[:films]
+  end
+end
+
+class DataCSV
+  def self.parse(text, parser_options)
+    data = CSV.parse(text)
+    result = []
+
+    data.each { |f|
+      result << {title: f[0], year: f[1].strip, rating: f[2].to_f}
+    }
+
+    result
+  end
+end
+
+class FilmsListError < Exception
+end
+
+class FilmsList
+  def initialize(file_path)
+    @file_path = file_path
+    @stars = Stars.new
+  end
+
+  def print
+    case define_type
+    when :json
+      data_provider = DataProvider.new(@file_path, DataJSON, {symbolize_names: true})
+    when :csv
+      data_provider = DataProvider.new(@file_path, DataCSV)
+    when :yaml, :yml
+      data_provider = DataProvider.new(@file_path, DataYAML)
+    else
+      raise FilmsListError.new('File type is not supported')
+    end
+
+    data = data_provider.load
+    data.each_with_index do |f, i|
+      puts "#{i + 1}. \"#{f[:title]}\" (#{f[:year]}) #{@stars.generate(f[:rating])}"
+    end
+  end
+
+  private
+
+  def define_type
+    pn = Pathname.new(@file_path)
+    pn.extname.sub('.', '').to_sym
+  end
+end
+
+file_path = $ARGV[0]
+
+if File.exist?(file_path)
+  films_list = FilmsList.new(file_path)
+  begin
+    films_list.print
+  rescue FilmsListError => e
+    puts "ERROR: #{e.message}"
+  end
+else
+  puts 'ERROR: File not found'
+end

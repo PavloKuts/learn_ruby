@@ -1,0 +1,50 @@
+#! /usr/bin/env ruby
+
+require 'English'
+
+require_relative '../lib/newspaper'
+require_relative '../lib/blacklist'
+require_relative '../lib/config'
+
+class App
+  CONFIG_PATH = "#{Dir.home}/rieltor.conf"
+
+  def initialize
+    @config = Config.new(CONFIG_PATH).config
+
+    @black_list_path = $ARGV[0]
+    @newspaper_path = $ARGV[1]
+
+    @numbers_list = Newspaper.new(@newspaper_path, @config[:bad_words]).numbers_list
+    @black_list = BlackList.new(@black_list_path)
+  end
+
+  def run
+    @numbers_list.each do |number|
+      @black_list.save_number(number[:number]) if number[:words]
+    end
+
+    @numbers_list.reject! do |number|
+      @black_list.include?(number[:number])
+    end
+
+    @numbers_list.each do |number|
+      puts
+      print "CALL TO THIS NUMBER: #{number[:number]}"
+
+      puts
+      print 'Was it rieltor? (y/n)'
+      answer = $stdin.gets.strip
+
+      if answer == 'y'
+        @black_list.save_number(number[:number])
+      end
+    end
+  end
+end
+
+begin
+  App.new.run
+rescue Errno::ENOENT => e
+  puts e.message
+end

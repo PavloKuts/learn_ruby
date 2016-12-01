@@ -1,0 +1,90 @@
+#! /usr/bin/env ruby
+require 'logger'
+require 'docopt'
+require 'ruby-progressbar'
+
+require_relative '../lib/flat_search'
+require_relative '../lib/file_generator_factory'
+require_relative '../lib/http_client'
+require_relative '../lib/cache/sqlite_cache'
+require_relative '../lib/ad_crawler'
+
+class FlatSearchApp
+  DOC = 'Flat Search
+Usage:
+  fs --version
+  fs --help
+  fs <olx_search_url> <file_path> [--format <format>] [--from <from>] [--to <to>]
+
+Options:
+  --help, -h                      Show this screen
+  --version, -v                   Show the current app version
+  --format <format>, -f           Output file format [default: txt]
+  --from <from>                   Start page [default: 1]
+  --to <to>                       Finish page'
+
+  def initialize(cache_class, http_client_class, file_generator, logger_class, logger_device, logger_level)
+    logger = logger_class.new(logger_device)
+    logger.level = logger_level
+
+    @docopt = Docopt.docopt(DOC)
+    format = @docopt['--format'].to_sym
+
+    @ad_crawler = AdCrawler.new(cache_class.new, http_client_class, logger)
+    @file_generator = FileGeneratorFactory.generator(format)
+
+    if @docopt['--version']
+      puts FlatSearch::VERSION
+      exit
+    end
+
+    ads = olx_crawl if @docopt['<olx_search_url>']
+    @file_generator.generate(@docopt['<file_path>'], ads)
+  rescue Docopt::Exit => e
+    puts e.message
+  end
+
+  private
+
+  def olx_crawl
+    url = @docopt['<olx_search_url>']
+    start_page = @docopt['--from'].to_i
+    finish_page = @docopt['--to'] ? @docopt['--to'].to_i : @docopt['--to']
+
+    last_page_number = @ad_crawler.last_page_number(url)
+    finish_page = last_page_number unless @docopt['--to']
+
+    if start_page > finish_page.to_i || start_page > last_page_number || start_page <= 0 || finish_page.to_i <= 0
+      error("--from must be <= --to and both must be > 0 and < #{last_page_number} for this URL")
+    end
+
+    progress_bar = nil
+
+    ads = @ad_crawler.ads(url, start_page, finish_page) do |count|
+      progress_bar ||= ProgressBar.create(
+        title: "Ads",
+        starting_at: 0,
+        total: count,
+        progress_mark: '▓',
+        length: 80,
+        format: '%t crawling: [%B] %p%% :: %a'
+      )
+
+      progress_bar.increment
+    end
+
+    error("Wrong URL (#{url}) given!") unless ads
+
+    ads
+  end
+
+  def error(message)
+    puts
+    puts "ERROR: #{message}!"
+    puts
+    exit
+  end
+end
+
+level = FlatSearch::DEBUG ? FlatSearch::DEBUG : Logger::UNKNOWN
+FlatSearchApp.new(AdsSQLiteCache, HttpClient, FileGeneratorFactory, Logger, STDOUT, level)
